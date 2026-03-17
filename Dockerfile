@@ -188,7 +188,6 @@ COPY scripts/check-env.py scripts/
 COPY --chmod=755 ./docker/entrypoints/run-server.sh /usr/bin/
 
 # Some debian libs
-# @gtelmaps: Added build-essential, pkg-config, default-libmysqlclient-dev for database drivers (mysql/oracle/excel)
 RUN /app/docker/apt-install.sh \
       curl \
       libsasl2-dev \
@@ -196,7 +195,6 @@ RUN /app/docker/apt-install.sh \
       libpq-dev \
       libecpg-dev \
       libldap2-dev \
-      build-essential \
       pkg-config \
       default-libmysqlclient-dev
 
@@ -233,10 +231,13 @@ COPY superset-core superset-core
 
 RUN --mount=type=cache,target=${SUPERSET_HOME}/.cache/uv \
     /app/docker/pip-install.sh --requires-build-essential -r requirements/base.txt
-# Install the superset package and database drivers for production
-# @gtelmaps: Added various database drivers to the baseline production installation, 
+# Install the superset package
 RUN --mount=type=cache,target=${SUPERSET_HOME}/.cache/uv \
-    uv pip install -e .[bigquery,clickhouse,databricks,druid,duckdb,dynamodb,elasticsearch,fastmcp,gsheets,mssql,motherduck,mysql,ocient,oracle,pinot,playwright,postgres,trino,redshift,shillelagh,snowflake,spark]
+    uv pip install -e .
+
+RUN --mount=type=cache,target=${SUPERSET_HOME}/.cache/uv \
+    /app/docker/pip-install.sh --requires-build-essential .[bigquery,clickhouse,databricks,druid,duckdb,dynamodb,elasticsearch,fastmcp,gsheets,mssql,motherduck,mysql,ocient,oracle,pinot,playwright,postgres,trino,redshift,shillelagh,snowflake,spark]
+
 RUN python -m compileall /app/superset
 
 USER superset
@@ -248,9 +249,7 @@ FROM python-common AS dev
 
 # Debian libs needed for dev
 RUN /app/docker/apt-install.sh \
-    git \
-    pkg-config \
-    default-libmysqlclient-dev
+    git
 
 # Copy development requirements and install them
 COPY requirements/*.txt requirements/
@@ -267,7 +266,6 @@ RUN --mount=type=cache,target=${SUPERSET_HOME}/.cache/uv \
     uv pip install -e .
 
 RUN uv pip install .[postgres]
-
 RUN python -m compileall /app/superset
 
 USER superset

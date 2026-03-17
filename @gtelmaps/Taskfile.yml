@@ -27,6 +27,18 @@ tasks:
     cmds:
       - docker compose -f {{.DOCKER_COMPOSE_FILE}} down
 
+  push:
+    desc: Push docker image to registry
+    <<: *setup
+    cmds:
+      - docker push {{.IMAGE_TAG}}
+
+  build-push:
+    desc: Build and push docker image
+    cmds:
+      - task: build
+      - task: push
+
   reset:
     desc: Stop the Superset application and remove containers along with volumes
     <<: *setup
